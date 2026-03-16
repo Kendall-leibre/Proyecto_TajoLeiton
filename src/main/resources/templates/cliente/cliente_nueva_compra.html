@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Nueva Compra | TAJO LEITON</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-light: #f4f7f6;
+            --tajo-blue: #0d6efd;
+        }
+        body {
+            background-color: var(--bg-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .form-control:focus {
+            border-color: var(--tajo-blue);
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+        .precio-highlight {
+            font-size: 1.5rem;
+            color: var(--tajo-blue);
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-5 shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-warning tracking-wide" th:href="@{/cliente_dashboard}">
+                TAJO LEITON <span class="text-white opacity-75 fs-6 fw-normal ms-2">| Portal Clientes</span>
+            </a>
+            <div class="d-flex align-items-center">
+                <span class="text-white me-4">
+                    Comprador: <strong class="text-warning" th:text="${nombreCliente}">Cliente</strong>
+                </span>
+                <a th:href="@{/cliente_dashboard}" class="btn btn-outline-light btn-sm fw-bold"><i class="fas fa-arrow-left me-2"></i>Volver al Panel</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mb-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-6 col-md-8">
+                <div class="card shadow-lg border-0 rounded-4 p-4 p-md-5 bg-white">
+                    
+                    <div class="text-center mb-4">
+                        <div class="bg-warning text-dark rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <i class="fas fa-shopping-cart fs-3"></i>
+                        </div>
+                        <h3 class="fw-bold text-dark mb-1">Confirmar Pedido</h3>
+                        <p class="text-muted">Complete los detalles de su compra de material</p>
+                    </div>
+                    
+                    <div class="alert alert-secondary border-0 rounded-3 mb-4">
+                        <div class="row">
+                            <div class="col-6">
+                                <small class="text-muted fw-bold text-uppercase d-block mb-1">Material Seleccionado</small>
+                                <span class="fw-bold fs-5 text-dark" th:text="${material.nombre}">Nombre Material</span>
+                            </div>
+                            <div class="col-6 text-end">
+                                <small class="text-muted fw-bold text-uppercase d-block mb-1">Unidad de Medida</small>
+                                <span class="badge bg-dark fs-6" th:text="${material.unidadMedida}">m³</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form th:action="@{/cliente/procesar_compra}" method="post" id="formCompra">
+                        
+                        <input type="hidden" name="idMaterial" th:value="${material.idMaterial}">
+                        
+                        <input type="hidden" id="precioUnitario" value="5000">
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-secondary">¿Qué cantidad necesita?</label>
+                            <div class="input-group input-group-lg shadow-sm">
+                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-weight-hanging text-muted"></i></span>
+                                <input type="number" step="0.5" min="1" name="cantidad" id="inputCantidad" class="form-control border-start-0 ps-0" required placeholder="Ej. 10">
+                                <span class="input-group-text bg-light fw-bold" th:text="${material.unidadMedida}">m³</span>
+                            </div>
+                            <div class="form-text text-muted mt-2"><i class="fas fa-info-circle me-1"></i> El precio estimado base es de ₡5,000 por m³.</div>
+                        </div>
+
+                        <div class="mb-5 p-3 bg-light rounded-3 text-center border border-2 border-primary border-opacity-25">
+                            <label class="form-label fw-bold text-uppercase small text-primary mb-1">Costo Total Estimado</label>
+                            <div class="input-group justify-content-center border-0">
+                                <span class="input-group-text bg-transparent border-0 precio-highlight pe-1">₡</span>
+                                <input type="number" step="0.01" name="precioTotal" id="inputTotal" class="form-control bg-transparent border-0 precio-highlight text-start w-auto px-0" style="max-width: 150px;" value="0" readonly required>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-3 d-md-flex justify-content-md-end">
+                            <a th:href="@{/cliente_dashboard}" class="btn btn-light btn-lg border shadow-sm fw-bold px-4">Cancelar</a>
+                            <button type="submit" class="btn btn-primary btn-lg shadow fw-bold px-5" id="btnConfirmar" disabled>
+                                <i class="fas fa-check-circle me-2"></i> Procesar Compra
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Lógica súper sencilla para calcular el precio en vivo mientras el cliente teclea
+        $(document).ready(function() {
+            const inputCantidad = $('#inputCantidad');
+            const inputTotal = $('#inputTotal');
+            const precioUnitario = parseFloat($('#precioUnitario').val());
+            const btnConfirmar = $('#btnConfirmar');
+
+            inputCantidad.on('input', function() {
+                let cantidad = parseFloat($(this).val());
+                
+                if (cantidad > 0) {
+                    let total = cantidad * precioUnitario;
+                    inputTotal.val(total.toFixed(2)); // Actualiza el input visual y el que se envía
+                    btnConfirmar.prop('disabled', false); // Habilita el botón si hay cantidad
+                } else {
+                    inputTotal.val(0);
+                    btnConfirmar.prop('disabled', true); // Deshabilita el botón si borran el número
+                }
+            });
+        });
+    </script>
+</body>
+</html>

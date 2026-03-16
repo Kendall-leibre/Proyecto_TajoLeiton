@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Transporte | Proyecto TAJO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --tajo-dark: #1a1d20; --tajo-warning: #ffc107; }
+        .card-tajo { border: none; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .header-tajo { background: var(--tajo-dark); color: white; border-radius: 10px; }
+        .badge-proceso { background-color: var(--tajo-warning); color: #000; }
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container py-4">
+    <div class="header-tajo p-4 mb-4 d-flex justify-content-between align-items-center shadow">
+        <div class="d-flex align-items-center">
+            <a th:href="@{/admin_dashboard}" class="btn btn-outline-light me-3">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div>
+                <h2 class="mb-0"><i class="fas fa-truck-moving me-2 text-warning"></i> GESTIÓN DE TRANSPORTE</h2>
+                <p class="mb-0 text-secondary">Proyecto TAJO - Control de Flotilla y Viajes</p>
+            </div>
+        </div>
+        <button class="btn btn-warning fw-bold" data-bs-toggle="modal" data-bs-target="#modalNuevoTrans">
+            <i class="fas fa-plus me-2"></i>NUEVO VIAJE
+        </button>
+    </div>
+
+    <div class="card card-tajo p-4 bg-white">
+        <table class="table table-hover text-center align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Placa</th>
+                    <th>Conductor</th>
+                    <th>Material</th>
+                    <th>Cant (m³)</th>
+                    <th>Precio</th>
+                    <th>Destino</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="trans : ${listaTransportes}">
+                    <td th:text="${trans.idTransporte}" class="fw-bold"></td>
+                    <td th:text="${trans.placa}"></td>
+                    <td th:text="${trans.usuario != null ? trans.usuario.nombre + ' ' + trans.usuario.apellidoPaterno : trans.identificacion}"></td>
+                    <td><span th:each="m : ${listaMateriales}" th:if="${m.idMaterial == trans.idMaterial}" th:text="${m.nombre}"></span></td>
+                    <td th:text="${trans.cantidadTransportada}"></td>
+                    <td th:text="'₡' + ${trans.precioTransporte}" class="text-success fw-bold"></td>
+                    <td th:text="${trans.destino}"></td>
+                    <td>
+                        <span th:each="est : ${listaEstados}" th:if="${est.idEstado == trans.idEstado}" 
+                              th:text="${est.nombreEstado}"
+                              th:class="${est.idEstado == 1 ? 'badge bg-success' : (est.idEstado == 2 ? 'badge bg-danger' : 'badge badge-proceso')}">
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary btn-edit-trans" 
+                            th:data-id="${trans.idTransporte}" th:data-placa="${trans.placa}" 
+                            th:data-ident="${trans.identificacion}" th:data-cant="${trans.cantidadTransportada}"
+                            th:data-precio="${trans.precioTransporte}" th:data-destino="${trans.destino}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger btn-delete" 
+                                th:onclick="'confirmarEliminar(\'/admin/transporte/eliminar/' + ${trans.idTransporte} + '\')'">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="modalNuevoTrans" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <form th:action="@{/admin/transporte/guardar}" method="post">
+            <div class="modal-header bg-dark text-white"><h5 class="modal-title">Registrar Transporte</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body row g-3">
+                <div class="col-6"><label class="form-label fw-bold">ID TRANSPORTE</label><input type="number" name="idTransporte" class="form-control" required></div>
+                <div class="col-6"><label class="form-label fw-bold">PLACA</label><input type="number" name="placa" class="form-control" required></div>
+                
+                <div class="col-12"><label class="form-label fw-bold">CONDUCTOR</label>
+                    <select name="identificacion" class="form-select" required>
+                        <option th:each="u : ${listaUsuarios}" th:value="${u.identificacion}" th:text="${u.nombre + ' ' + u.apellidoPaterno}"></option>
+                    </select>
+                </div>
+                
+                <div class="col-12"><label class="form-label fw-bold">MATERIAL</label>
+                    <select name="idMaterial" class="form-select" required>
+                        <option th:each="m : ${listaMateriales}" th:value="${m.idMaterial}" th:text="${m.nombre}"></option>
+                    </select>
+                </div>
+                
+                <div class="col-6"><label class="form-label fw-bold">CANTIDAD</label><input type="number" step="0.01" name="cantidadTransportada" class="form-control" required></div>
+                <div class="col-6"><label class="form-label fw-bold">PRECIO (₡)</label><input type="number" step="0.01" name="precioTransporte" class="form-control" required></div>
+                
+                <div class="col-12"><label class="form-label fw-bold">DESTINO</label><input type="text" name="destino" class="form-control" required></div>
+                
+                <div class="col-12"><label class="form-label fw-bold">ESTADO INICIAL</label>
+                    <select name="idEstado" class="form-select" required>
+                        <option th:each="est : ${listaEstados}" th:value="${est.idEstado}" th:text="${est.nombreEstado}"></option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer"><button type="submit" class="btn btn-warning w-100 fw-bold">GUARDAR REGISTRO</button></div>
+        </form>
+    </div></div>
+</div>
+
+<div class="modal fade" id="modalEditTrans" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <form th:action="@{/admin/transporte/editar}" method="post">
+            <div class="modal-header bg-primary text-white"><h5 class="modal-title">Editar Transporte</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body row g-3">
+                <input type="hidden" name="idTransporte" id="editTransId">
+                
+                <div class="col-12"><label class="form-label fw-bold">NUEVA PLACA</label><input type="number" name="placa" id="editTransPlaca" class="form-control" required></div>
+                
+                <div class="col-12"><label class="form-label fw-bold">NUEVO CONDUCTOR</label>
+                    <select name="identificacion" id="editTransIdent" class="form-select" required>
+                        <option th:each="u : ${listaUsuarios}" th:value="${u.identificacion}" th:text="${u.nombre + ' ' + u.apellidoPaterno}"></option>
+                    </select>
+                </div>
+                
+                <div class="col-6"><label class="form-label fw-bold">NUEVA CANTIDAD</label><input type="number" step="0.01" name="cantidadTransportada" id="editTransCant" class="form-control" required></div>
+                <div class="col-6"><label class="form-label fw-bold">NUEVO PRECIO</label><input type="number" step="0.01" name="precioTransporte" id="editTransPrecio" class="form-control" required></div>
+                
+                <div class="col-12"><label class="form-label fw-bold">NUEVO DESTINO</label><input type="text" name="destino" id="editTransDestino" class="form-control" required></div>
+            </div>
+            <div class="modal-footer"><button type="submit" class="btn btn-primary w-100 fw-bold">ACTUALIZAR</button></div>
+        </form>
+    </div></div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script th:if="${mensaje != null}">
+    Swal.fire({
+        title: '[[${tipo == "success" ? "¡Logrado!" : "¡Atención!"}]]',
+        text: '[[${mensaje}]]',
+        icon: '[[${tipo}]]',
+        confirmButtonColor: '#1a1d20'
+    });
+</script>
+
+<script>
+    function confirmarEliminar(url) {
+        Swal.fire({
+            title: 'Confirmación de eliminación',
+            text: "El registro seleccionado pasará a estado inactivo. ¿Desea continuar?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#1a1d20',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = url;
+            }
+        });
+    }
+
+    // Llenar Modal de Edición con los 6 datos exactos
+    $('.btn-edit-trans').on('click', function() {
+        $('#editTransId').val($(this).data('id'));
+        $('#editTransPlaca').val($(this).data('placa'));
+        $('#editTransIdent').val($(this).data('ident'));
+        $('#editTransCant').val($(this).data('cant'));
+        $('#editTransPrecio').val($(this).data('precio'));
+        $('#editTransDestino').val($(this).data('destino'));
+        $('#modalEditTrans').modal('show');
+    });
+</script>
+</body>
+</html>

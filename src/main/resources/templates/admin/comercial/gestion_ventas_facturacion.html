@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Comercialización | Proyecto TAJO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --tajo-dark: #1a1d20;
+            --tajo-warning: #ffc107;
+        }
+
+        .card-tajo {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-tajo {
+            background: var(--tajo-dark);
+            color: white;
+            border-radius: 10px;
+        }
+
+        .nav-tabs .nav-link {
+            color: #6c757d;
+            font-weight: bold;
+            border: none;
+        }
+
+        .nav-tabs .nav-link.active {
+            border-bottom: 4px solid var(--tajo-warning);
+            color: var(--tajo-dark) !important;
+        }
+
+        .badge-proceso {
+            background-color: var(--tajo-warning);
+            color: #000;
+        }
+
+        .table-detalle {
+            font-size: 0.9rem;
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+    <div class="container-fluid py-4 px-4">
+        <div class="header-tajo p-4 mb-4 d-flex justify-content-between align-items-center shadow">
+            <div class="d-flex align-items-center">
+                <a th:href="@{/admin_dashboard}" class="btn btn-outline-light me-3">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h2 class="mb-0"><i class="fas fa-handshake me-2 text-warning"></i> COMERCIALIZACIÓN</h2>
+                    <p class="mb-0 text-secondary">Proyecto TAJO - Gestión de Ventas y Facturación</p>
+                </div>
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs mb-0 bg-white rounded-top shadow-sm" id="comercialTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active px-4" id="ventas-tab" data-bs-toggle="tab" data-bs-target="#tab-ventas"
+                    type="button">1. REGISTRO DE VENTAS</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link px-4" id="facturas-tab" data-bs-toggle="tab" data-bs-target="#tab-facturas"
+                    type="button">2. FACTURACIÓN</button>
+            </li>
+        </ul>
+
+        <div class="tab-content card card-tajo border-top-0 rounded-top-0 p-4 bg-white">
+
+            <div class="tab-pane fade show active" id="tab-ventas">
+                <div class="d-flex justify-content-between mb-3">
+                    <h4 class="text-dark fw-bold">Encabezados de Venta</h4>
+                    <div>
+                        <button class="btn btn-outline-dark fw-bold me-2" data-bs-toggle="modal"
+                            data-bs-target="#modalNuevoDetalle">
+                            <i class="fas fa-cart-plus me-2"></i>AGREGAR PRODUCTO (LÍNEA)
+                        </button>
+                        <button class="btn btn-dark fw-bold" data-bs-toggle="modal" data-bs-target="#modalNuevaVenta">
+                            <i class="fas fa-plus me-2"></i>NUEVA VENTA
+                        </button>
+                    </div>
+                </div>
+
+                <table class="table table-hover text-center align-middle border">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID Venta</th>
+                            <th>Cliente (Cédula)</th>
+                            <th>Material Principal</th>
+                            <th>Cantidad</th>
+                            <th>Precio Base</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <th:block th:each="v : ${listaVentas}">
+                            <tr class="table-light">
+                                <td class="fw-bold" th:text="${v.idVenta}"></td>
+                                <td th:text="${v.cedula}"></td>
+
+                                <td class="fw-bold text-secondary">
+                                    <span th:each="m : ${listaMateriales}" th:if="${m.idMaterial == v.idMaterial}"
+                                        th:text="${m.nombre}"></span>
+                                    <span th:if="${v.idMaterial == null}">No asignado</span>
+                                </td>
+
+                                <td th:text="${v.cantidadVenta} + ' m³'"></td>
+                                <td th:text="'₡' + ${v.precio}" class="text-success fw-bold"></td>
+
+                                <td
+                                    th:text="${v.fechaVenta != null ? #dates.format(v.fechaVenta, 'yyyy-MM-dd') : 'Sin Fecha'}">
+                                </td>
+                                <td>
+                                    <span th:each="est : ${listaEstados}" th:if="${est.idEstado == v.idEstado}"
+                                        th:text="${est.nombreEstado}"
+                                        th:class="${est.idEstado == 1 ? 'badge bg-success' : (est.idEstado == 2 ? 'badge bg-danger' : 'badge badge-proceso')}">
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary btn-edit-venta"
+                                        th:data-id="${v.idVenta}" th:data-mat="${v.idMaterial}"
+                                        th:data-cant="${v.cantidadVenta}" th:data-precio="${v.precio}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger"
+                                        th:onclick="'confirmarAccion(\'/admin/comercial/ventas/eliminar/' + ${v.idVenta} + '\', \'Se anulará la venta completa.\')'">
+                                        <i class="fas fa-ban"></i>
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td colspan="8" class="p-0 border-0">
+                                    <div class="collapse show mx-4 my-2">
+                                        <table class="table table-sm table-bordered table-detalle mb-0 bg-white">
+                                            <thead class="text-secondary bg-light">
+                                                <tr>
+                                                    <th><i class="fas fa-level-up-alt fa-rotate-90 me-2"></i>Producto
+                                                        Adicional (Línea Extra)</th>
+                                                    <th>Precio Total (Línea)</th>
+                                                    <th>Acciones Línea</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr th:each="det : ${listaDetalles}"
+                                                    th:if="${det.idVenta == v.idVenta}">
+                                                    <td><span th:each="m : ${listaMateriales}"
+                                                            th:if="${m.idMaterial == det.idMaterial}"
+                                                            th:text="${m.nombre}"></span></td>
+                                                    <td th:text="'₡' + ${det.precioTotal}" class="text-primary fw-bold">
+                                                    </td>
+                                                    <td>
+                                                        <button
+                                                            class="btn btn-xs btn-outline-secondary btn-edit-detalle"
+                                                            th:data-idventa="${det.idVenta}"
+                                                            th:data-idmat="${det.idMaterial}"
+                                                            th:data-precio="${det.precioTotal}">
+                                                            <i class="fas fa-pencil-alt"></i>
+                                                        </button>
+                                                        <button class="btn btn-xs btn-outline-danger"
+                                                            th:onclick="'confirmarAccion(\'/admin/comercial/detalle/eliminar/' + ${det.idVenta} + '/' + ${det.idMaterial} + '\', \'Se eliminará este producto extra.\')'">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                <tr
+                                                    th:if="${#lists.isEmpty(listaDetalles.?[idVenta == __${v.idVenta}__])}">
+                                                    <td colspan="3" class="text-muted fst-italic text-center">No hay
+                                                        productos adicionales en esta venta.</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        </th:block>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="tab-pane fade" id="tab-facturas">
+                <div class="d-flex justify-content-between mb-3">
+                    <h4 class="text-primary fw-bold">Facturas Emitidas</h4>
+                    <button class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#modalNuevaFactura">
+                        <i class="fas fa-file-invoice-dollar me-2"></i>EMITIR FACTURA
+                    </button>
+                </div>
+                <table class="table table-hover text-center align-middle">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>N° Factura</th>
+                            <th>ID Venta</th>
+                            <th>Cédula</th>
+                            <th>Fecha Emisión</th>
+                            <th>Monto Total</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="fac : ${listaFacturas}">
+                            <td th:text="${fac.idFactura}" class="fw-bold"></td>
+                            <td th:text="${fac.idVenta}"></td>
+                            <td th:text="${fac.cedula}"></td>
+                            <td
+                                th:text="${fac.fechaEmision != null ? #dates.format(fac.fechaEmision, 'yyyy-MM-dd') : 'Sin Fecha'}">
+                            </td>
+                            <td th:text="'₡' + ${fac.montoTotal}" class="text-primary fw-bold"></td>
+                            <td>
+                                <span th:each="est : ${listaEstados}" th:if="${est.idEstado == fac.idEstado}"
+                                    th:text="${est.nombreEstado}"
+                                    th:class="${est.idEstado == 1 ? 'badge bg-success' : (est.idEstado == 2 ? 'badge bg-danger' : 'badge badge-proceso')}">
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-dark btn-edit-factura"
+                                    th:data-id="${fac.idFactura}" th:data-metodo="${fac.idMetodoPago}"
+                                    th:data-monto="${fac.montoTotal}" th:data-estado="${fac.idEstado}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger"
+                                    th:onclick="'confirmarAccion(\'/admin/facturacion/eliminar/' + ${fac.idFactura} + '\', \'La factura será anulada legalmente.\')'">
+                                    <i class="fas fa-file-excel"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalNuevaVenta" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form th:action="@{/admin/comercial/ventas/guardar}" method="post">
+                    <div class="modal-header bg-dark text-white">
+                        <h5 class="modal-title">Registrar Nueva Venta</h5><button type="button"
+                            class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body row g-3">
+                        <div class="col-6"><label class="form-label fw-bold">ID VENTA</label><input type="number"
+                                name="idVenta" class="form-control" required></div>
+                        <div class="col-6"><label class="form-label fw-bold">CÉDULA CLIENTE</label><input type="number"
+                                name="cedula" class="form-control" required></div>
+                        <div class="col-12"><label class="form-label fw-bold">MATERIAL INICIAL</label>
+                            <select name="idMaterial" class="form-select" required>
+                                <option th:each="m : ${listaMateriales}" th:value="${m.idMaterial}"
+                                    th:text="${m.nombre}"></option>
+                            </select>
+                        </div>
+                        <div class="col-6"><label class="form-label fw-bold">CANTIDAD (m³)</label><input type="number"
+                                step="0.01" name="cantidadVenta" class="form-control" required></div>
+                        <div class="col-6"><label class="form-label fw-bold">PRECIO (₡)</label><input type="number"
+                                step="0.01" name="precio" class="form-control" required></div>
+                        <div class="col-12"><label class="form-label fw-bold">FECHA</label><input type="date"
+                                name="fechaVenta" class="form-control" required></div>
+                        <div class="col-12"><label class="form-label fw-bold">ESTADO INICIAL</label>
+                            <select name="idEstado" class="form-select" required>
+                                <option th:each="est : ${listaEstados}" th:value="${est.idEstado}"
+                                    th:text="${est.nombreEstado}"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer"><button type="submit" class="btn btn-dark w-100 fw-bold">CREAR
+                            VENTA</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEditVenta" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form th:action="@{/admin/comercial/ventas/editar}" method="post">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">Editar Encabezado de Venta</h5><button type="button"
+                            class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body row g-3">
+                        <input type="hidden" name="idVenta" id="editVentaId">
+                        <div class="col-12"><label class="form-label fw-bold">NUEVO MATERIAL PRINCIPAL</label>
+                            <select name="idMaterial" id="editVentaMat" class="form-select" required>
+                                <option th:each="m : ${listaMateriales}" th:value="${m.idMaterial}"
+                                    th:text="${m.nombre}"></option>
+                            </select>
+                        </div>
+                        <div class="col-6"><label class="form-label fw-bold">NUEVA CANTIDAD</label><input type="number"
+                                step="0.01" name="cantidadVenta" id="editVentaCant" class="form-control" required></div>
+                        <div class="col-6"><label class="form-label fw-bold">NUEVO PRECIO</label><input type="number"
+                                step="0.01" name="precio" id="editVentaPrecio" class="form-control" required></div>
+                    </div>
+                    <div class="modal-footer"><button type="submit" class="btn btn-primary w-100 fw-bold">ACTUALIZAR
+                            VENTA</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalNuevoDetalle" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form th:action="@{/admin/comercial/detalle/guardar}" method="post">
+                    <div class="modal-header bg-secondary text-white">
+                        <h5 class="modal-title">Agregar Producto a Venta</h5><button type="button"
+                            class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body row g-3">
+                        <div class="col-12"><label class="form-label fw-bold">SELECCIONE LA VENTA (ID)</label>
+                            <select name="idVenta" class="form-select" required>
+                                <option th:each="v : ${listaVentas}" th:value="${v.idVenta}"
+                                    th:text="'Venta #' + ${v.idVenta}"></option>
+                            </select>
+                        </div>
+                        <div class="col-12"><label class="form-label fw-bold">MATERIAL A AGREGAR</label>
+                            <select name="idMaterial" class="form-select" required>
+                                <option th:each="m : ${listaMateriales}" th:value="${m.idMaterial}"
+                                    th:text="${m.nombre}"></option>
+                            </select>
+                        </div>
+                        <div class="col-12"><label class="form-label fw-bold">PRECIO TOTAL DE LÍNEA (₡)</label><input
+                                type="number" step="0.01" name="precioTotal" class="form-control" required></div>
+                    </div>
+                    <div class="modal-footer"><button type="submit" class="btn btn-secondary w-100 fw-bold">AGREGAR
+                            PRODUCTO</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEditDetalle" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form th:action="@{/admin/comercial/detalle/editar}" method="post">
+                    <div class="modal-header bg-dark text-white">
+                        <h5 class="modal-title">Editar Precio de Línea</h5><button type="button"
+                            class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body row g-3">
+                        <input type="hidden" name="idVenta" id="editDetVenta">
+                        <input type="hidden" name="idMaterial" id="editDetMat">
+                        <div class="col-12"><label class="form-label fw-bold">NUEVO PRECIO TOTAL (₡)</label><input
+                                type="number" step="0.01" name="precioTotal" id="editDetPrecio" class="form-control"
+                                required></div>
+                    </div>
+                    <div class="modal-footer"><button type="submit" class="btn btn-dark w-100 fw-bold">ACTUALIZAR
+                            LÍNEA</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalNuevaFactura" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form th:action="@{/admin/facturacion/guardar}" method="post">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">Emitir Factura Electrónica</h5><button type="button"
+                            class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body row g-3">
+                        <div class="col-md-4"><label class="form-label fw-bold">ID FACTURA</label><input type="number"
+                                name="idFactura" class="form-control" required></div>
+                        <div class="col-md-4"><label class="form-label fw-bold">CÉDULA</label><input type="number"
+                                name="cedula" class="form-control" required></div>
+                        <div class="col-md-4"><label class="form-label fw-bold">ASOCIAR VENTA (ID)</label>
+                            <select name="idVenta" class="form-select" required>
+                                <option th:each="v : ${listaVentas}" th:value="${v.idVenta}"
+                                    th:text="'Venta #' + ${v.idVenta}"></option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4"><label class="form-label fw-bold">IMPUESTO</label>
+                            <select name="idImpuesto" class="form-select" required>
+                                <option th:each="i : ${listaImpuestos}" th:value="${i.idImpuesto}"
+                                    th:text="${i.nombre + ' (' + i.porcentaje + '%)'}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-4"><label class="form-label fw-bold">DESCUENTO</label>
+                            <select name="idDescuento" class="form-select" required>
+                                <option th:each="d : ${listaDescuentos}" th:value="${d.idDescuento}"
+                                    th:text="${d.nombre + ' (' + d.porcentaje + '%)'}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-4"><label class="form-label fw-bold">MÉTODO DE PAGO</label>
+                            <select name="idMetodoPago" class="form-select" required>
+                                <option th:each="mp : ${listaMetodos}" th:value="${mp.idMetodoPago}"
+                                    th:text="${mp.nombre}"></option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4"><label class="form-label fw-bold">FECHA EMISIÓN</label><input type="date"
+                                name="fechaEmision" class="form-control" required></div>
+                        <div class="col-md-4"><label class="form-label fw-bold">MONTO TOTAL (₡)</label><input
+                                type="number" step="0.01" name="montoTotal" class="form-control" required></div>
+
+                        <div class="col-md-4"><label class="form-label fw-bold">ESTADO DE FACTURA</label>
+                            <select name="idEstado" class="form-select" required>
+                                <option th:each="est : ${listaEstados}" th:value="${est.idEstado}"
+                                    th:text="${est.nombreEstado}"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer"><button type="submit" class="btn btn-primary w-100 fw-bold">GENERAR
+                            FACTURA</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEditFactura" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form th:action="@{/admin/facturacion/editar}" method="post">
+                    <div class="modal-header bg-dark text-white">
+                        <h5 class="modal-title">Editar Factura Emitida</h5><button type="button"
+                            class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body row g-3">
+                        <input type="hidden" name="idFactura" id="editFacId">
+                        <div class="col-12"><label class="form-label fw-bold">NUEVO MÉTODO DE PAGO</label>
+                            <select name="idMetodoPago" id="editFacMetodo" class="form-select" required>
+                                <option th:each="mp : ${listaMetodos}" th:value="${mp.idMetodoPago}"
+                                    th:text="${mp.nombre}"></option>
+                            </select>
+                        </div>
+                        <div class="col-12"><label class="form-label fw-bold">NUEVO MONTO TOTAL (₡)</label><input
+                                type="number" step="0.01" name="montoTotal" id="editFacMonto" class="form-control"
+                                required></div>
+
+                        <div class="col-12"><label class="form-label fw-bold">NUEVO ESTADO</label>
+                            <select name="idEstado" id="editFacEstado" class="form-select" required>
+                                <option th:each="est : ${listaEstados}" th:value="${est.idEstado}"
+                                    th:text="${est.nombreEstado}"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer"><button type="submit" class="btn btn-dark w-100 fw-bold">ACTUALIZAR
+                            FACTURA</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script th:if="${mensaje != null}">
+        Swal.fire({
+            title: '[[${tipo == "success" ? "Notificación del Sistema" : "Advertencia de Error"}]]',
+            text: '[[${mensaje}]]',
+            icon: '[[${tipo}]]',
+            confirmButtonColor: '#1a1d20'
+        });
+    </script>
+
+    <script>
+        // Función formal para confirmar eliminaciones/anulaciones
+        function confirmarAccion(url, mensajeDetalle) {
+            Swal.fire({
+                title: 'Confirmación de Seguridad',
+                text: mensajeDetalle + " ¿Desea proceder?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#1a1d20',
+                confirmButtonText: 'Sí, proceder',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url;
+                }
+            });
+        }
+
+        // Llenado Modal Editar Venta
+        $('.btn-edit-venta').on('click', function () {
+            $('#editVentaId').val($(this).data('id'));
+            $('#editVentaMat').val($(this).data('mat'));
+            $('#editVentaCant').val($(this).data('cant'));
+            $('#editVentaPrecio').val($(this).data('precio'));
+            $('#modalEditVenta').modal('show');
+        });
+
+        // Llenado Modal Editar Detalle (Línea)
+        $('.btn-edit-detalle').on('click', function () {
+            $('#editDetVenta').val($(this).data('idventa'));
+            $('#editDetMat').val($(this).data('idmat'));
+            $('#editDetPrecio').val($(this).data('precio'));
+            $('#modalEditDetalle').modal('show');
+        });
+
+        // Llenado Modal Editar Factura
+        $('.btn-edit-factura').on('click', function () {
+            $('#editFacId').val($(this).data('id'));
+            $('#editFacMetodo').val($(this).data('metodo'));
+            $('#editFacMonto').val($(this).data('monto'));
+            $('#editFacEstado').val($(this).data('estado'));
+            $('#modalEditFactura').modal('show');
+        });
+    </script>
+</body>
+
+</html>

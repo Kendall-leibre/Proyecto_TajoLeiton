@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Control de Flota | TAJO LEITON</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-dark: #111418;
+            --accent-orange: #f39c12;
+            --sidebar-width: 260px;
+        }
+
+        body {
+            background-color: #f4f7f6;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .sidebar {
+            background-color: var(--primary-dark);
+            min-height: 100vh;
+            width: var(--sidebar-width);
+            position: fixed;
+            color: white;
+            padding: 20px;
+            z-index: 1000;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 30px;
+        }
+
+        .nav-link-side {
+            color: #adb5bd;
+            padding: 12px 15px;
+            border-radius: 8px;
+            transition: 0.3s;
+            margin-bottom: 5px;
+            text-decoration: none;
+            display: block;
+        }
+
+        .nav-link-side:hover,
+        .nav-link-side.active {
+            color: white;
+            background: var(--accent-orange);
+        }
+
+        .card-custom {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            background: white;
+            padding: 25px;
+        }
+
+        /* Colores de estados dinámicos */
+        .badge-active {
+            background-color: #28a745;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        .badge-inactive {
+            background-color: #dc3545;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        /* Estilo para el modal de advertencia */
+        .modal-confirm .modal-content {
+            border-radius: 15px;
+            border: none;
+        }
+
+        .modal-confirm .modal-header {
+            border-bottom: none;
+        }
+
+        .modal-confirm .icon-box {
+            color: #dc3545;
+            border: 3px solid #dc3545;
+            display: inline-block;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            line-height: 65px;
+            font-size: 30px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="sidebar">
+        <div class="text-center mb-5">
+            <h4 class="fw-bold text-warning">TAJO LEITON</h4>
+            <p class="small text-muted">Módulo Supervisor</p>
+        </div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" th:href="@{/supervisor/dashboard}">
+                    <i class="fas fa-chart-line me-2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item"><a class="nav-link-side" th:href="@{/supervisor/operaciones}"><i
+                        class="fas fa-tasks me-2"></i> Operaciones</a></li>
+            <li class="nav-item"><a class="nav-link-side" th:href="@{/supervisor/transporte}"><i
+                        class="fas fa-truck me-2"></i> Transporte</a></li>
+            <li class="nav-item"><a class="nav-link-side active" th:href="@{/supervisor/maquinaria}"><i
+                        class="fas fa-tractor me-2"></i> Maquinaria</a></li>
+            <hr class="opacity-25 text-white">
+            <li class="nav-item"><a th:href="@{/logout}" class="nav-link-side text-danger"><i
+                        class="fas fa-sign-out-alt me-2"></i> Salir</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content">
+        <div class="mb-4">
+            <h2 class="fw-bold text-dark">Monitoreo de Maquinaria</h2>
+            <p class="text-muted">Estado operativo de los equipos según la Base de Datos.</p>
+        </div>
+
+        <div th:if="${mensaje}"
+            th:class="'alert alert-dismissible fade show border-0 shadow-sm alert-' + (${tipo == 'success' ? 'success' : 'danger'})"
+            role="alert">
+            <i th:class="${tipo == 'success' ? 'fas fa-check-circle me-2' : 'fas fa-exclamation-triangle me-2'}"></i>
+            <span th:text="${mensaje}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="card card-custom">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Placa</th>
+                            <th>Modelo</th>
+                            <th>Horas Uso</th>
+                            <th>Estado Actual</th>
+                            <th class="text-center">Control Operativo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="maq : ${listaMaquinaria}">
+                            <td class="fw-bold text-primary" th:text="${maq.placa}"></td>
+                            <td th:text="${maq.modelo}"></td>
+                            <td th:text="${maq.horasTrabajadas} + ' h'"></td>
+                            <td>
+                                <span th:if="${maq.estado != null}" th:text="${maq.estado.nombreEstado}"
+                                    th:class="${maq.idEstado.toString() == '1' ? 'badge badge-active' : 'badge badge-inactive'}">
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <button th:if="${maq.idEstado.toString() == '1'}" type="button"
+                                    class="btn btn-sm btn-outline-danger shadow-sm px-3"
+                                    th:onclick="'confirmarInactivacion(\'' + ${maq.placa} + '\')'">
+                                    <i class="fas fa-power-off me-1"></i> Inactivar
+                                </button>
+
+                                <span th:unless="${maq.idEstado.toString() == '1'}" class="text-muted small italic">
+                                    <i class="fas fa-lock me-1"></i> Unidad en <span
+                                        th:text="${maq.estado.nombreEstado}"></span>
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal fade modal-confirm" id="modalConfirmar" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content text-center">
+                <div class="modal-header d-block">
+                    <div class="icon-box mx-auto">
+                        <i class="fas fa-exclamation"></i>
+                    </div>
+                    <h4 class="modal-title w-100 fw-bold">¿Estás seguro?</h4>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted">¿Realmente desea inactivar la unidad <strong id="placaDisplay"></strong>? Esta
+                        acción reportará la falla en la base de datos.</p>
+                </div>
+                <div class="modal-footer border-0 d-flex justify-content-center">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <a id="btnConfirmarAccion" href="#" class="btn btn-danger px-4">Sí, Inactivar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function confirmarInactivacion(placa) {
+            // Actualizar el texto del modal con la placa
+            document.getElementById('placaDisplay').innerText = placa;
+
+            // Configurar la ruta de redirección dinámicamente
+            const url = '/supervisor/maquinaria/inactivar/' + placa;
+            document.getElementById('btnConfirmarAccion').setAttribute('href', url);
+
+            // Mostrar el modal
+            var myModal = new bootstrap.Modal(document.getElementById('modalConfirmar'));
+            myModal.show();
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Operaciones | Proyecto TAJO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --tajo-dark: #1a1d20; --tajo-warning: #ffc107; }
+        .card-tajo { border: none; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .header-tajo { background: var(--tajo-dark); color: white; border-radius: 10px; }
+        .nav-tabs .nav-link { color: #6c757d; font-weight: bold; border: none; }
+        .nav-tabs .nav-link.active { border-bottom: 4px solid var(--tajo-warning); color: var(--tajo-dark) !important; }
+        .badge-proceso { background-color: var(--tajo-warning); color: #000; }
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container py-4">
+    <div class="header-tajo p-4 mb-4 d-flex justify-content-between align-items-center shadow">
+        <div class="d-flex align-items-center">
+            <a th:href="@{/admin_dashboard}" class="btn btn-outline-light me-3">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div>
+                <h2 class="mb-0"><i class="fas fa-hammer me-2 text-warning"></i> GESTIÓN DE OPERACIONES</h2>
+                <p class="mb-0 text-secondary">Proyecto TAJO - Control de Extracciones y Producción</p>
+            </div>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs mb-0 bg-white rounded-top shadow-sm" id="opTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active px-4" id="ext-tab" data-bs-toggle="tab" data-bs-target="#tab-ext" type="button">EXTRACCIÓN</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link px-4" id="prod-tab" data-bs-toggle="tab" data-bs-target="#tab-prod" type="button">PRODUCCIÓN</button>
+        </li>
+    </ul>
+
+    <div class="tab-content card card-tajo border-top-0 rounded-top-0 p-4 bg-white">
+        
+        <div class="tab-pane fade show active" id="tab-ext">
+            <div class="d-flex justify-content-between mb-3">
+                <h4>Registros de Extracción</h4>
+                <button class="btn btn-dark fw-bold" data-bs-toggle="modal" data-bs-target="#modalNuevaExt">
+                    <i class="fas fa-plus me-2"></i>NUEVA EXTRACCIÓN
+                </button>
+            </div>
+            <table class="table table-hover text-center align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Operador</th>
+                        <th>Material</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="ext : ${listaExtracciones}">
+                        <td th:text="${ext.idExtraccion}" class="fw-bold"></td>
+                        <td th:text="${ext.usuario != null ? ext.usuario.nombre + ' ' + ext.usuario.apellidoPaterno : ext.identificacion}"></td>
+                        <td><span th:each="m : ${listaMateriales}" th:if="${m.idMaterial == ext.idMaterial}" th:text="${m.nombre}"></span></td>
+                        <td th:text="${#dates.format(ext.fechaExtraccion, 'yyyy-MM-dd')}"></td>
+                        <td>
+                            <span th:each="est : ${listaEstados}" th:if="${est.idEstado == ext.idEstado}" 
+                                  th:text="${est.nombreEstado}"
+                                  th:class="${est.idEstado == 1 ? 'badge bg-success' : (est.idEstado == 2 ? 'badge bg-danger' : 'badge badge-proceso')}">
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary btn-edit-ext" 
+                                th:data-id="${ext.idExtraccion}" th:data-ident="${ext.identificacion}" 
+                                th:data-mat="${ext.idMaterial}" th:data-fecha="${#dates.format(ext.fechaExtraccion, 'yyyy-MM-dd')}"
+                                th:data-estado="${ext.idEstado}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger btn-delete" 
+                                    th:onclick="'confirmarEliminar(\'/admin/operaciones/extraccion/eliminar/' + ${ext.idExtraccion} + '\')'">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="tab-pane fade" id="tab-prod">
+            <div class="d-flex justify-content-between mb-3">
+                <h4>Registros de Producción</h4>
+                <button class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#modalNuevaProd">
+                    <i class="fas fa-plus me-2"></i>NUEVA PRODUCCIÓN
+                </button>
+            </div>
+            <table class="table table-hover text-center align-middle">
+                <thead class="table-primary">
+                    <tr>
+                        <th>ID</th>
+                        <th>Material</th>
+                        <th>Cantidad (m³)</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="prod : ${listaProducciones}">
+                        <td th:text="${prod.idProduccion}" class="fw-bold"></td>
+                        <td><span th:each="m : ${listaMateriales}" th:if="${m.idMaterial == prod.idMaterial}" th:text="${m.nombre}"></span></td>
+                        <td th:text="${prod.cantidad}" class="text-primary fw-bold"></td>
+                        <td th:text="${#dates.format(prod.fechaProduccion, 'yyyy-MM-dd')}"></td>
+                        <td>
+                            <span th:each="est : ${listaEstados}" th:if="${est.idEstado == prod.idEstado}" 
+                                  th:text="${est.nombreEstado}"
+                                  th:class="${est.idEstado == 1 ? 'badge bg-success' : (est.idEstado == 2 ? 'badge bg-danger' : 'badge badge-proceso')}">
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-dark btn-edit-prod" 
+                                th:data-id="${prod.idProduccion}" th:data-mat="${prod.idMaterial}" 
+                                th:data-cant="${prod.cantidad}" th:data-fecha="${#dates.format(prod.fechaProduccion, 'yyyy-MM-dd')}"
+                                th:data-estado="${prod.idEstado}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger btn-delete" 
+                                    th:onclick="'confirmarEliminar(\'/admin/operaciones/produccion/eliminar/' + ${prod.idProduccion} + '\')'">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalNuevaExt" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <form th:action="@{/admin/operaciones/extraccion/guardar}" method="post">
+            <div class="modal-header bg-dark text-white"><h5 class="modal-title">Nueva Extracción</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body row g-3">
+                <div class="col-12"><label class="form-label fw-bold">ID EXTRACCIÓN</label><input type="number" name="idExtraccion" class="form-control" required></div>
+                <div class="col-12"><label class="form-label fw-bold">OPERADOR</label>
+                    <select name="identificacion" class="form-select">
+                        <option th:each="u : ${listaUsuarios}" th:value="${u.identificacion}" th:text="${u.nombre + ' ' + u.apellidoPaterno}"></option>
+                    </select>
+                </div>
+                <div class="col-12"><label class="form-label fw-bold">MATERIAL</label>
+                    <select name="idMaterial" class="form-select">
+                        <option th:each="m : ${listaMateriales}" th:value="${m.idMaterial}" th:text="${m.nombre}"></option>
+                    </select>
+                </div>
+                <div class="col-12"><label class="form-label fw-bold">FECHA</label><input type="date" name="fechaExtraccion" class="form-control" required></div>
+                <div class="col-12"><label class="form-label fw-bold">ESTADO INICIAL</label>
+                    <select name="idEstado" class="form-select">
+                        <option th:each="est : ${listaEstados}" th:value="${est.idEstado}" th:text="${est.nombreEstado}"></option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer"><button type="submit" class="btn btn-dark w-100 fw-bold">GUARDAR REGISTRO</button></div>
+        </form>
+    </div></div>
+</div>
+
+<div class="modal fade" id="modalNuevaProd" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <form th:action="@{/admin/operaciones/produccion/guardar}" method="post">
+            <div class="modal-header bg-primary text-white"><h5 class="modal-title">Nueva Producción</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body row g-3">
+                <div class="col-12"><label class="form-label fw-bold">ID PRODUCCIÓN</label><input type="number" name="idProduccion" class="form-control" required></div>
+                <div class="col-12"><label class="form-label fw-bold">MATERIAL</label>
+                    <select name="idMaterial" class="form-select">
+                        <option th:each="m : ${listaMateriales}" th:value="${m.idMaterial}" th:text="${m.nombre}"></option>
+                    </select>
+                </div>
+                <div class="col-12"><label class="form-label fw-bold">CANTIDAD (m³)</label><input type="number" step="0.01" name="cantidad" class="form-control" required></div>
+                <div class="col-12"><label class="form-label fw-bold">FECHA</label><input type="date" name="fechaProduccion" class="form-control" required></div>
+                <div class="col-12"><label class="form-label fw-bold">ESTADO INICIAL</label>
+                    <select name="idEstado" class="form-select">
+                        <option th:each="est : ${listaEstados}" th:value="${est.idEstado}" th:text="${est.nombreEstado}"></option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer"><button type="submit" class="btn btn-primary w-100 fw-bold">GUARDAR REGISTRO</button></div>
+        </form>
+    </div></div>
+</div>
+
+<div class="modal fade" id="modalEditExt" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <form th:action="@{/admin/operaciones/extraccion/editar}" method="post">
+            <div class="modal-header bg-primary text-white"><h5 class="modal-title">Editar Extracción</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body row g-3">
+                <input type="hidden" name="idExtraccion" id="editExtId">
+                <div class="col-12"><label class="form-label fw-bold">OPERADOR</label>
+                    <select name="identificacion" id="editExtIdent" class="form-select">
+                        <option th:each="u : ${listaUsuarios}" th:value="${u.identificacion}" th:text="${u.nombre + ' ' + u.apellidoPaterno}"></option>
+                    </select>
+                </div>
+                <div class="col-12"><label class="form-label fw-bold">MATERIAL</label>
+                    <select name="idMaterial" id="editExtMat" class="form-select">
+                        <option th:each="m : ${listaMateriales}" th:value="${m.idMaterial}" th:text="${m.nombre}"></option>
+                    </select>
+                </div>
+                <div class="col-12"><label class="form-label fw-bold">FECHA</label><input type="date" name="fechaExtraccion" id="editExtFecha" class="form-control" required></div>
+                <div class="col-12"><label class="form-label fw-bold">ESTADO</label>
+                    <select name="idEstado" id="editExtEstado" class="form-select">
+                        <option th:each="est : ${listaEstados}" th:value="${est.idEstado}" th:text="${est.nombreEstado}"></option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer"><button type="submit" class="btn btn-primary w-100 fw-bold">ACTUALIZAR</button></div>
+        </form>
+    </div></div>
+</div>
+
+<div class="modal fade" id="modalEditProd" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <form th:action="@{/admin/operaciones/produccion/editar}" method="post">
+            <div class="modal-header bg-dark text-white"><h5 class="modal-title">Editar Producción</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body row g-3">
+                <input type="hidden" name="idProduccion" id="editProdId">
+                <div class="col-12"><label class="form-label fw-bold">MATERIAL</label>
+                    <select name="idMaterial" id="editProdMat" class="form-select">
+                        <option th:each="m : ${listaMateriales}" th:value="${m.idMaterial}" th:text="${m.nombre}"></option>
+                    </select>
+                </div>
+                <div class="col-12"><label class="form-label fw-bold">CANTIDAD (m³)</label><input type="number" step="0.01" name="cantidad" id="editProdCant" class="form-control" required></div>
+                <div class="col-12"><label class="form-label fw-bold">FECHA</label><input type="date" name="fechaProduccion" id="editProdFecha" class="form-control" required></div>
+                <div class="col-12"><label class="form-label fw-bold">ESTADO</label>
+                    <select name="idEstado" id="editProdEstado" class="form-select">
+                        <option th:each="est : ${listaEstados}" th:value="${est.idEstado}" th:text="${est.nombreEstado}"></option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer"><button type="submit" class="btn btn-dark w-100 fw-bold">ACTUALIZAR</button></div>
+        </form>
+    </div></div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script th:if="${mensaje != null}">
+    Swal.fire({
+        title: '[[${tipo == "success" ? "¡Logrado!" : "¡Atención!"}]]',
+        text: '[[${mensaje}]]',
+        icon: '[[${tipo}]]',
+        confirmButtonColor: '#1a1d20'
+    });
+</script>
+
+<script>
+    function confirmarEliminar(url) {
+        Swal.fire({
+            title: '¿Estás seguro, crack?',
+            text: "Esta acción no se puede deshacer.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#1a1d20',
+            confirmButtonText: 'Sí, borrarlo',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = url;
+            }
+        });
+    }
+
+    $('.btn-edit-ext').on('click', function() {
+        $('#editExtId').val($(this).data('id'));
+        $('#editExtIdent').val($(this).data('ident'));
+        $('#editExtMat').val($(this).data('mat'));
+        $('#editExtFecha').val($(this).data('fecha'));
+        $('#editExtEstado').val($(this).data('estado'));
+        $('#modalEditExt').modal('show');
+    });
+
+    $('.btn-edit-prod').on('click', function() {
+        $('#editProdId').val($(this).data('id'));
+        $('#editProdMat').val($(this).data('mat'));
+        $('#editProdCant').val($(this).data('cant'));
+        $('#editProdFecha').val($(this).data('fecha'));
+        $('#editProdEstado').val($(this).data('estado'));
+        $('#modalEditProd').modal('show');
+    });
+</script>
+</body>
+</html>

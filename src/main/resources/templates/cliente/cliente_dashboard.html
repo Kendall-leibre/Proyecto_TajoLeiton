@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Mi Panel | TAJO LEITON</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-light: #f4f7f6;
+            --tajo-blue: #0d6efd;
+            --tajo-green: #198754;
+        }
+        body {
+            background-color: var(--bg-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .kpi-card {
+            border: none;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+            position: relative;
+            overflow: hidden;
+        }
+        .kpi-card:hover { transform: translateY(-5px); }
+        .border-tajo-blue { border-left: 4px solid var(--tajo-blue) !important; }
+        .border-tajo-green { border-left: 4px solid var(--tajo-green) !important; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-5 shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-warning tracking-wide" href="#">
+                TAJO LEITON <span class="text-white opacity-75 fs-6 fw-normal ms-2">| Portal Clientes</span>
+            </a>
+            <div class="d-flex align-items-center">
+                <span class="text-white me-4">
+                    Bienvenido, <strong class="text-warning" th:text="${nombreCliente}">Cliente</strong>
+                </span>
+                <a th:href="@{/logout}" class="btn btn-outline-danger btn-sm fw-bold"><i class="fas fa-power-off me-2"></i> Salir</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row g-4 mb-5">
+            <div class="col-md-6">
+                <div class="kpi-card p-4 h-100 border-tajo-green">
+                    <p class="text-muted mb-1 small fw-bold text-uppercase">Mis Compras Activas</p>
+                    <h2 class="fw-bold mb-0 text-success">
+                        <i class="fas fa-truck-loading me-2"></i><span th:text="${ventasActivas}">0</span>
+                    </h2>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="kpi-card p-4 h-100 border-tajo-blue">
+                    <p class="text-muted mb-1 small fw-bold text-uppercase">Total Invertido Histórico</p>
+                    <h2 class="fw-bold mb-0 text-primary">
+                        <i class="fas fa-wallet me-2"></i>₡<span th:text="${totalComprado}">0</span>
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm p-4 rounded-4 bg-white">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="fw-bold text-dark"><i class="fas fa-cubes text-warning me-2"></i>Catálogo de Materiales</h5>
+                        <button class="btn btn-warning fw-bold text-dark"><i class="fas fa-plus me-2"></i> Nueva Compra</button>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light text-secondary small text-uppercase">
+                                <tr>
+                                    <th>Material</th>
+                                    <th>Función</th>
+                                    <th>Unidad</th>
+                                    <th class="text-center">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="m : ${materialesDisponibles}">
+                                    <td class="fw-bold text-dark" th:text="${m.nombre}">Nombre Material</td>
+                                    <td th:text="${m.funcion}">Función del material</td>
+                                    <td th:text="${m.unidadMedida}">m3</td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary fw-bold px-3">Comprar</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</body>
+</html>

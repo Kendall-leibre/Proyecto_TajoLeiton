@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Maquinaria | Tajo Leiton</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --tajo-blue: #0d6efd;
+            --tajo-dark: #212529;
+            --tajo-gray: #f8f9fa;
+            --tajo-steel: #495057;
+        }
+
+        body {
+            background-color: #f4f7f6;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .navbar-tajo {
+            background-color: var(--tajo-dark);
+            border-bottom: 4px solid var(--tajo-blue);
+            color: white;
+            padding: 1rem;
+        }
+
+        .card-tajo {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-tajo {
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(13, 110, 253, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="navbar-tajo mb-4">
+        <div class="container d-flex justify-content-between align-items-center">
+            <span class="fs-4 fw-bold"><i class="fas fa-tractor me-2 text-info"></i> PANEL ADMINISTRATIVO - MAQUINARIA</span>
+            <span class="badge bg-primary px-3 py-2"
+                th:text="${usuario != null ? usuario.nombre : 'Admin'}">Usuario</span>
+        </div>
+    </div>
+
+    <div class="container pb-5">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold text-dark m-0">Control Maestro de Flota</h3>
+                <p class="text-muted">Gestión técnica y administrativa de maquinaria pesada.</p>
+            </div>
+            <button class="btn btn-primary btn-tajo shadow-sm" data-bs-toggle="modal"
+                data-bs-target="#modalNuevaMaquinaria">
+                <i class="fas fa-plus me-2"></i>Registrar Nueva Unidad
+            </button>
+        </div>
+
+        <div th:if="${mensaje}" 
+             th:class="'alert alert-dismissible fade show border-0 shadow-sm alert-' + (${tipo == 'success' ? 'success' : 'danger'})" 
+             role="alert">
+            <i th:class="${tipo == 'success' ? 'fas fa-check-circle me-2' : 'fas fa-exclamation-triangle me-2'}"></i>
+            <span th:text="${mensaje}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="card card-tajo overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="ps-4">Placa</th>
+                            <th>Modelo</th>
+                            <th>Horas Uso</th>
+                            <th>Estado Actual</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="maq : ${listaMaquinaria}">
+                            <td class="ps-4 fw-bold text-primary" th:text="${maq.placa}"></td>
+                            <td th:text="${maq.modelo}"></td>
+                            <td>
+                                <span class="badge bg-light text-dark border"
+                                    th:text="${maq.horasTrabajadas + ' hrs'}"></span>
+                            </td>
+                            <td>
+                                <span th:if="${maq.estado != null}" 
+                                      th:text="${maq.estado.nombreEstado}" 
+                                      th:class="${maq.idEstado.toString() == '1' ? 'badge bg-success' : 'badge bg-danger'}">
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-dark btn-editar" data-bs-toggle="modal"
+                                    data-bs-target="#modalEditarMaquinaria" th:data-placa="${maq.placa}"
+                                    th:data-modelo="${maq.modelo}" th:data-horas="${maq.horasTrabajadas}"
+                                    th:data-estado="${maq.idEstado}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <a th:href="@{/admin/maquinaria/eliminar/{id}(id=${maq.placa})}"
+                                    class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('¿Seguro que desea inactivar esta unidad? Se aplicará el Procedimiento Almacenado de Oracle.')">
+                                    <i class="fas fa-power-off"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a th:href="@{/admin_dashboard}" class="btn btn-light border btn-tajo">
+                <i class="fas fa-chevron-left me-2"></i>Regresar al Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalNuevaMaquinaria" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">Registrar Maquinaria en Oracle</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form th:action="@{/admin/maquinaria/guardar}" method="post">
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-uppercase">Número de Placa</label>
+                                <input type="number" name="placa" class="form-control" placeholder="Ej: 123456" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-uppercase">Modelo (Año)</label>
+                                <input type="number" name="modelo" class="form-control" placeholder="Ej: 2024" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-uppercase">Tipo de Maquinaria</label>
+                                <select name="idTipo" class="form-select" required>
+                                    <option value="" disabled selected>-- Seleccione Tipo --</option>
+                                    <option th:each="t : ${listaTipos}" th:value="${t.idTipo}" th:text="${t.descripcion}"></option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-uppercase">Estado Operativo</label>
+                                <select name="idEstado" class="form-select" required>
+                                    <option th:each="est : ${listaEstados}" th:value="${est.idEstado}" th:text="${est.nombreEstado}"></option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="submit" class="btn btn-primary w-100 py-2 shadow-sm">Ejecutar SP Insertar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEditarMaquinaria" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold">Modificar mediante Oracle SP</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form th:action="@{/admin/maquinaria/editar}" method="post">
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-uppercase">PLACA (Identificador)</label>
+                                <input type="text" id="edit_placa" name="placa" class="form-control bg-light" readonly>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-uppercase">ACTUALIZAR MODELO</label>
+                                <input type="number" id="edit_modelo" name="modelo" class="form-control" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-uppercase">ACTUALIZAR HORAS</label>
+                                <input type="number" step="0.01" id="edit_horas" name="horasTrabajadas" class="form-control" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-uppercase">CAMBIAR ESTADO</label>
+                                <select id="edit_estado" name="idEstado" class="form-select" required>
+                                    <option th:each="est : ${listaEstados}" th:value="${est.idEstado}" th:text="${est.nombreEstado}"></option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="submit" class="btn btn-dark w-100 py-2 shadow-sm">Ejecutar SP Modificar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Lógica para pasar datos al modal de edición
+        document.querySelectorAll('.btn-editar').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.getElementById('edit_placa').value = this.getAttribute('data-placa');
+                document.getElementById('edit_modelo').value = this.getAttribute('data-modelo');
+                document.getElementById('edit_estado').value = this.getAttribute('data-estado');
+                document.getElementById('edit_horas').value = this.getAttribute('data-horas');
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Ejecutivo | TAJO LEITON</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --accent: #f39c12;
+            --dark-sidebar: #111418;
+            --bg-light: #f4f7f6;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            background: var(--dark-sidebar);
+            position: fixed;
+            color: white;
+            padding-top: 20px;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .sidebar-link {
+            padding: 14px 25px;
+            display: block;
+            color: #8a93a2;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar-link:hover, .sidebar-link.active {
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--accent);
+            border-left: 4px solid var(--accent);
+        }
+
+        .main-content {
+            margin-left: 260px;
+            padding: 40px;
+        }
+
+        .kpi-card {
+            border: none;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .kpi-card:hover { transform: translateY(-5px); }
+        .kpi-card::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 4px; }
+        .kpi-blue::before { background-color: #0d6efd; }
+        .kpi-green::before { background-color: #198754; }
+        .kpi-orange::before { background-color: #f39c12; }
+        .kpi-purple::before { background-color: #6f42c1; }
+
+        .search-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .executive-table th {
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            color: #6c757d;
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="sidebar">
+        <div class="text-center mb-4">
+            <h4 class="fw-bold text-warning tracking-wide">TAJO LEITON</h4>
+            <span class="badge bg-secondary px-3 py-2 rounded-pill mt-2"><i class="fas fa-shield-alt me-1"></i> DIRECCIÓN GENERAL</span>
+        </div>
+        <hr class="mx-3 border-secondary opacity-25">
+
+        <a th:href="@{/admin_dashboard}" class="sidebar-link active"><i class="fas fa-chart-line me-3"></i> Resumen Ejecutivo</a>
+        <a th:href="@{/admin/clientes}" class="sidebar-link"><i class="fas fa-users me-3"></i> Clientes</a>
+        <a th:href="@{/admin/materiales}" class="sidebar-link"><i class="fas fa-cubes me-3"></i> Inventario</a>
+        <a th:href="@{/admin/maquinaria}" class="sidebar-link"><i class="fas fa-truck-pickup me-3"></i> Maquinaria</a>
+        <a th:href="@{/admin/usuarios}" class="sidebar-link"><i class="fas fa-hard-hat me-3"></i> Usuarios</a>
+        <a th:href="@{/admin/operaciones}" class="sidebar-link"><i class="fas fa-digging me-3"></i> Operaciones</a>
+        <a th:href="@{/admin/transporte}" class="sidebar-link"><i class="fas fa-truck-moving me-3"></i> Transporte</a>
+        <a th:href="@{/admin/comercial}" class="sidebar-link"><i class="fas fa-file-invoice-dollar me-3"></i> Comercialización</a>
+
+        <div class="mt-5 px-4 position-absolute bottom-0 w-100 mb-4">
+            <a th:href="@{/logout}" class="btn btn-outline-danger btn-sm w-100 fw-bold">Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="d-flex justify-content-between align-items-end mb-5">
+            <div>
+                <h2 class="fw-bold mb-1 text-dark">Panel de Control Gerencial</h2>
+                <p class="text-muted mb-0">Bienvenido, <span class="fw-bold text-primary" th:text="${nombreAdmin}">Admin</span>.</p>
+            </div>
+            <div class="text-end text-muted">
+                <div class="d-flex align-items-center">
+                    <span class="spinner-grow spinner-grow-sm text-success me-2"></span>
+                    <span class="fw-bold text-success me-3 small">Oracle Real-Time</span>
+                    <i class="fas fa-calendar-alt me-2"></i><span class="small" th:text="${#dates.format(#dates.createNow(), 'dd MMM yyyy')}"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-5">
+            <div class="col-xl-3 col-md-6">
+                <div class="kpi-card kpi-orange p-4 h-100">
+                    <p class="text-muted mb-1 small fw-bold text-uppercase">Extracción Hoy</p>
+                    <h3 class="fw-bold mb-0 text-dark" th:text="${extraccionHoy != null ? extraccionHoy : '0'} + ' m³'">0 m³</h3>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="kpi-card kpi-blue p-4 h-100">
+                    <p class="text-muted mb-1 small fw-bold text-uppercase">Maquinaria Activa</p>
+                    <h3 class="fw-bold mb-0 text-dark" th:text="${maquinasActivas}">0</h3>
+                    <div class="mt-2 small text-muted"><span th:text="${horasMaquina}"></span> hrs totales</div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="kpi-card kpi-green p-4 h-100">
+                    <p class="text-muted mb-1 small fw-bold text-uppercase">Nómina Liquidada</p>
+                    <h3 class="fw-bold mb-0 text-dark" th:text="'₡' + ${totalPlanillas}">₡0</h3>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="kpi-card kpi-purple p-4 h-100">
+                    <p class="text-muted mb-1 small fw-bold text-uppercase">Carga Deducciones</p>
+                    <h3 class="fw-bold mb-0 text-dark" th:text="${totalDeducciones} + '%'">0%</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="card border-0 shadow-sm p-4 h-100 rounded-4 bg-white">
+                    <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-clock text-warning me-2"></i>Distribución de Turnos</h5>
+                    <table class="table executive-table align-middle text-center">
+                        <thead>
+                            <tr>
+                                <th>Jornada Operativa</th>
+                                <th>Cantidad Personal</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="fw-bold">Turno Diurno</td>
+                                <td th:text="${usuariosDia}">0</td>
+                                <td><span class="badge bg-success">Operativo</span></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Turno Nocturno</td>
+                                <td th:text="${usuariosNoche}">0</td>
+                                <td><span class="badge bg-info">En Guardia</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm p-4 h-100 rounded-4 bg-dark text-white">
+                    <h5 class="fw-bold mb-4 text-warning"><i class="fas fa-database me-2"></i>Consultas al Package</h5>
+                    
+                    <div class="search-container">
+                        <label class="small text-secondary fw-bold text-uppercase mb-1">Nombre por Cédula</label>
+                        <div class="input-group input-group-sm">
+                            <input type="number" id="cedulaBusqueda" class="form-control bg-dark border-secondary text-white" placeholder="Cédula...">
+                            <button class="btn btn-warning" onclick="buscarNombreOracle()"><i class="fas fa-search"></i></button>
+                        </div>
+                        <p class="mb-0 mt-1 small text-info" id="resNombre">---</p>
+                    </div>
+
+                    <div class="search-container">
+                        <label class="small text-secondary fw-bold text-uppercase mb-1">Clientes por Tipo</label>
+                        <div class="input-group input-group-sm">
+                            <select id="tipoClienteBusqueda" class="form-select bg-dark border-secondary text-white">
+                                <option th:each="t : ${tiposClientes}" th:value="${t.idTipoCliente}" th:text="${t.nombreTipo}"></option>
+                            </select>
+                            <button class="btn btn-warning" onclick="buscarClientesOracle()"><i class="fas fa-filter"></i></button>
+                        </div>
+                        <p class="mb-0 mt-1 small text-info" id="resClientes">---</p>
+                    </div>
+
+                    <div class="search-container">
+                        <label class="small text-secondary fw-bold text-uppercase mb-1">Stock Actual Material</label>
+                        <div class="input-group input-group-sm">
+                            <select id="idMaterialStock" class="form-select bg-dark border-secondary text-white">
+                                <option th:each="m : ${materiales}" th:value="${m.idMaterial}" th:text="${m.nombre}"></option>
+                            </select>
+                            <button class="btn btn-warning" onclick="buscarStockOracle()"><i class="fas fa-boxes"></i></button>
+                        </div>
+                        <p class="mb-0 mt-1 small text-info" id="resStock">---</p>
+                    </div>
+
+                    <div class="search-container">
+                        <label class="small text-secondary fw-bold text-uppercase mb-1">Total Ventas Cliente</label>
+                        <div class="input-group input-group-sm">
+                            <input type="number" id="cedulaVentas" class="form-control bg-dark border-secondary text-white" placeholder="Cédula cliente...">
+                            <button class="btn btn-warning" onclick="buscarVentasOracle()"><i class="fas fa-dollar-sign"></i></button>
+                        </div>
+                        <p class="mb-0 mt-1 small text-info" id="resVentas">---</p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function buscarNombreOracle() {
+            const ced = $('#cedulaBusqueda').val();
+            if(!ced) return;
+            $.get('/api/dashboard/nombre-usuario?cedula=' + ced, function(data) {
+                $('#resNombre').html('Resultado: <strong>' + data + '</strong>');
+            }).fail(() => $('#resNombre').text('Error en consulta'));
+        }
+
+        function buscarClientesOracle() {
+            const tipo = $('#tipoClienteBusqueda').val();
+            $.get('/api/dashboard/clientes-tipo?tipo=' + tipo, function(data) {
+                $('#resClientes').html('Cantidad: <strong>' + (data || 0) + ' Clientes</strong>');
+            });
+        }
+
+        function buscarStockOracle() {
+            const id = $('#idMaterialStock').val();
+            $.get('/api/dashboard/stock-material?idMaterial=' + id, function(data) {
+                const valor = data ? parseFloat(data).toFixed(2) : "0.00";
+                $('#resStock').html('Stock: <strong>' + valor + ' m³</strong>');
+            });
+        }
+
+        function buscarVentasOracle() {
+            const ced = $('#cedulaVentas').val();
+            if(!ced) return;
+            $.get('/api/dashboard/ventas-cliente?cedula=' + ced, function(data) {
+                const monto = data ? parseFloat(data) : 0;
+                $('#resVentas').html('Monto: <strong>₡' + monto.toLocaleString('es-CR') + '</strong>');
+            });
+        }
+    </script>
+</body>
+</html>

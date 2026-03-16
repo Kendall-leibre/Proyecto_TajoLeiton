@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión Integral | Tajo Leiton</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --tajo-blue: #0d6efd; --tajo-dark: #212529; --tajo-gray: #f8f9fa; --tajo-steel: #495057; }
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; }
+        .navbar-tajo { background-color: var(--tajo-dark); border-bottom: 4px solid var(--tajo-blue); color: white; padding: 1rem; }
+        .nav-tabs .nav-link { color: var(--tajo-steel); font-weight: 600; border: none; padding: 12px 25px; }
+        .nav-tabs .nav-link.active { color: var(--tajo-blue); border-bottom: 3px solid var(--tajo-blue); background: transparent; }
+        .card-tajo { border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .btn-tajo { border-radius: 8px; font-weight: 600; transition: all 0.3s; }
+    </style>
+</head>
+
+<body>
+    <div class="navbar-tajo mb-4">
+        <div class="container d-flex justify-content-between align-items-center">
+            <span class="fs-4 fw-bold"><i class="fas fa-warehouse me-2 text-info"></i> CONTROL DE OPERACIONES</span>
+            <span class="badge bg-primary px-3 py-2" th:text="${usuario != null ? usuario.nombre : 'Admin'}">Usuario</span>
+        </div>
+    </div>
+
+    <div class="container pb-5">
+        <ul class="nav nav-tabs mb-4" id="tajoTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="materiales-tab" data-bs-toggle="tab" data-bs-target="#materiales" type="button">
+                    <i class="fas fa-cubes me-2"></i>Catálogo de Materiales
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="inventario-tab" data-bs-toggle="tab" data-bs-target="#inventario" type="button">
+                    <i class="fas fa-exchange-alt me-2"></i>Movimientos de Inventario
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="tajoTabsContent">
+            <div class="tab-pane fade show active" id="materiales" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="fw-bold m-0 text-dark">Materiales Disponibles</h4>
+                    <button class="btn btn-primary btn-tajo" data-bs-toggle="modal" data-bs-target="#modalNuevoMaterial">
+                        <i class="fas fa-plus me-2"></i>Nuevo Material
+                    </button>
+                </div>
+                <div class="card card-tajo overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="ps-4">ID</th>
+                                    <th>Nombre</th>
+                                    <th>Unidad</th>
+                                    <th>Función</th>
+                                    <th>Estado</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="m : ${listaMateriales}">
+                                    <td class="ps-4 fw-bold text-primary" th:text="${m.idMaterial}"></td>
+                                    <td th:text="${m.nombre}"></td>
+                                    <td th:text="${m.unidadMedida}"></td>
+                                    <td th:text="${m.funcion}"></td>
+                                    <td>
+                                        <span th:class="${m.idEstado != null and m.idEstado.toString() == '1' ? 'badge bg-success' : 'badge bg-secondary'}"
+                                              th:text="${m.idEstado != null and m.idEstado.toString() == '1' ? 'Activo' : 'Inactivo'}"></span>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-dark btn-editar-material" 
+                                            data-bs-toggle="modal" data-bs-target="#modalEditarMaterial"
+                                            th:data-id="${m.idMaterial}" th:data-nombre="${m.nombre}"
+                                            th:data-unidad="${m.unidadMedida}" th:data-funcion="${m.funcion}"
+                                            th:data-estado="${m.idEstado}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <a th:href="@{/admin/materiales/eliminar/{id}(id=${m.idMaterial})}" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="inventario" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="fw-bold m-0 text-dark">Registros de Inventario</h4>
+                    <button class="btn btn-dark btn-tajo" data-bs-toggle="modal" data-bs-target="#modalNuevoInventario">
+                        <i class="fas fa-truck-loading me-2"></i>Registrar Movimiento
+                    </button>
+                </div>
+                <div class="card card-tajo overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-secondary text-dark">
+                                <tr>
+                                    <th class="ps-4">ID Inv.</th>
+                                    <th>Material (ID)</th>
+                                    <th>Cantidad</th>
+                                    <th>Stock</th>
+                                    <th>Tipo Mov.</th>
+                                    <th>Estado</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="i : ${listaInventario}">
+                                    <td class="ps-4 fw-bold" th:text="${i.idInventario}"></td>
+                                    <td th:text="${i.idMaterial}"></td>
+                                    <td th:text="${i.cantidadMaterial}"></td>
+                                    <td th:text="${i.nivelStock}"></td>
+                                    <td>
+                                        <span class="badge bg-info text-dark" th:text="${i.idTipoMovimiento.toString() == '1' ? 'Entrada' : 'Salida'}"></span>
+                                    </td>
+                                    <td>
+                                        <span th:class="${i.idEstado.toString() == '1' ? 'badge bg-success' : 'badge bg-danger'}"
+                                              th:text="${i.idEstado.toString() == '1' ? 'Válido' : 'Anulado'}"></span>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-dark btn-editar-inventario" 
+                                            data-bs-toggle="modal" data-bs-target="#modalEditarInventario"
+                                            th:data-id="${i.idInventario}" th:data-cantidad="${i.cantidadMaterial}"
+                                            th:data-stock="${i.nivelStock}">
+                                            <i class="fas fa-sync-alt"></i>
+                                        </button>
+                                        <a th:href="@{/admin/materiales/inventario/eliminar/{idInv}/{idMat}(idInv=${i.idInventario}, idMat=${i.idMaterial})}" 
+                                           class="btn btn-sm btn-outline-danger"><i class="fas fa-ban"></i></a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-5 pt-3 border-top">
+            <a th:href="@{/admin_dashboard}" class="btn btn-light border btn-tajo"><i class="fas fa-chevron-left me-2"></i>Regresar al Dashboard</a>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalNuevoMaterial" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white"><h5>Nuevo Material</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <form th:action="@{/admin/materiales/guardar}" method="post">
+                    <div class="modal-body">
+                        <div class="mb-3"><label class="form-label">ID Material</label><input type="number" name="idMaterial" class="form-control" required></div>
+                        <div class="mb-3"><label class="form-label">Nombre</label><input type="text" name="nombre" class="form-control" required></div>
+                        <div class="mb-3"><label class="form-label">Unidad</label><input type="text" name="unidadMedida" class="form-control" placeholder="m3, kg, etc."></div>
+                        <div class="mb-3"><label class="form-label">Función</label><input type="text" name="funcion" class="form-control"></div>
+                        <div class="mb-3"><label class="form-label">Estado</label><select name="idEstado" class="form-select"><option value="1">Activo</option><option value="2">Inactivo</option></select></div>
+                    </div>
+                    <div class="modal-footer"><button type="submit" class="btn btn-primary w-100">Guardar Material</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEditarMaterial" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white"><h5>Editar Material</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <form th:action="@{/admin/materiales/editar}" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" id="edit_id" name="idMaterial">
+                        <div class="mb-3"><label class="form-label">Nombre</label><input type="text" id="edit_nombre" name="nombre" class="form-control" required></div>
+                        <div class="mb-3"><label class="form-label">Unidad</label><input type="text" id="edit_unidad" name="unidadMedida" class="form-control"></div>
+                        <div class="mb-3"><label class="form-label">Función</label><input type="text" id="edit_funcion" name="funcion" class="form-control"></div>
+                        <div class="mb-3"><label class="form-label">Estado</label><select id="edit_estado" name="idEstado" class="form-select"><option value="1">Activo</option><option value="2">Inactivo</option></select></div>
+                    </div>
+                    <div class="modal-footer"><button type="submit" class="btn btn-primary w-100">Actualizar</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalNuevoInventario" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white"><h5>Registrar Movimiento</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <form th:action="@{/admin/materiales/inventario/guardar}" method="post">
+                    <div class="modal-body row g-3">
+                        <div class="col-6"><label class="form-label">ID Inventario</label><input type="number" name="idInventario" class="form-control" required></div>
+                        <div class="col-6"><label class="form-label">ID Material</label><input type="number" name="idMaterial" class="form-control" required></div>
+                        <div class="col-6"><label class="form-label">Cantidad</label><input type="number" step="0.01" name="cantidadMaterial" class="form-control" required></div>
+                        <div class="col-6"><label class="form-label">Stock</label><input type="number" name="nivelStock" class="form-control" required></div>
+                        <div class="col-6"><label class="form-label">Movimiento</label><select name="idTipoMovimiento" class="form-select"><option value="1">Entrada</option><option value="2">Salida</option></select></div>
+                        <div class="col-6"><label class="form-label">Estado</label><select name="idEstado" class="form-select"><option value="1">Activo</option><option value="2">Inactivo</option></select></div>
+                    </div>
+                    <div class="modal-footer"><button type="submit" class="btn btn-primary w-100">Confirmar</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEditarInventario" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-info"><h5>Modificar Existencias</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <form th:action="@{/admin/materiales/inventario/editar}" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" id="inv_edit_id" name="idInventario">
+                        <div class="mb-3"><label class="form-label">Nueva Cantidad</label><input type="number" step="0.01" id="inv_edit_cantidad" name="cantidadMaterial" class="form-control" required></div>
+                        <div class="mb-3"><label class="form-label">Nuevo Stock</label><input type="number" id="inv_edit_stock" name="nivelStock" class="form-control" required></div>
+                    </div>
+                    <div class="modal-footer"><button type="submit" class="btn btn-dark w-100">Actualizar</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Editar Material
+        document.querySelectorAll('.btn-editar-material').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.getElementById('edit_id').value = this.getAttribute('data-id');
+                document.getElementById('edit_nombre').value = this.getAttribute('data-nombre');
+                document.getElementById('edit_unidad').value = this.getAttribute('data-unidad');
+                document.getElementById('edit_funcion').value = this.getAttribute('data-funcion');
+                document.getElementById('edit_estado').value = this.getAttribute('data-estado');
+            });
+        });
+
+        // Editar Inventario
+        document.querySelectorAll('.btn-editar-inventario').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.getElementById('inv_edit_id').value = this.getAttribute('data-id');
+                document.getElementById('inv_edit_cantidad').value = this.getAttribute('data-cantidad');
+                document.getElementById('inv_edit_stock').value = this.getAttribute('data-stock');
+            });
+        });
+    </script>
+</body>
+</html>
